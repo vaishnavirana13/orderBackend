@@ -8,7 +8,7 @@ const app = express();
 const port = 4000;
 
 app.use(express.json());
-app.use(cors({ origin: 'https://vercel.com/vaishnavis-projects-8912a560/order-frontend' })); // Adjust frontend URL if needed
+app.use(cors({ origin: 'https://yourfrontendurl.com' })); // Replace with your frontend URL
 
 // Test the server and database connection
 app.get('/', async (req, res) => {
@@ -23,11 +23,11 @@ app.get('/', async (req, res) => {
   }
 });
 
+// Fetch all orders
 app.get('/api/orders', async (req, res) => {
     try {
-      // Fetch only data from the 'orders' table
       const { data, error } = await supabase
-        .from('orders')  // Just select from orders
+        .from('orders')
         .select('id, orderdescription, created_at');
   
       if (error) {
@@ -46,9 +46,7 @@ app.get('/api/orders', async (req, res) => {
       console.error('Error fetching orders:', err);
       res.status(500).json({ error: 'Failed to fetch orders', details: err.message });
     }
-  });
-  
-  
+});
 
 // Create a new Order and link it to a Product
 app.post('/api/orders', async (req, res) => {
@@ -234,10 +232,9 @@ app.get('/api/customers', async (req, res) => {
 app.get('/api/customers/:orderId', async (req, res) => {
   const { orderId } = req.params;
   try {
-    // Assuming you are linking customer information to the order ID somehow
     const customer = await db('customers')
       .select('email')
-      .where('id', orderId) // Fetching customer details based on order ID
+      .where('id', orderId) 
       .first();
     if (customer) {
       res.json(customer);
@@ -249,8 +246,5 @@ app.get('/api/customers/:orderId', async (req, res) => {
   }
 });
 
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
+// Export the app for Vercel
+module.exports = app;
