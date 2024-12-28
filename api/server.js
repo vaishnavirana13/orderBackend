@@ -5,10 +5,9 @@ const moment = require('moment-timezone');
 const supabase = require('./db'); // Import the Supabase client
 
 const app = express();
-const port = 4000;
 
 app.use(express.json());
-app.use(cors({ origin: 'https://yourfrontendurl.com' })); // Replace with your frontend URL
+app.use(cors({ origin: 'http://localhost:5173' })); // Adjust frontend URL if needed
 
 // Test the server and database connection
 app.get('/', async (req, res) => {
@@ -23,29 +22,28 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Fetch all orders
 app.get('/api/orders', async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id, orderdescription, created_at');
-  
-      if (error) {
-        console.error('Error fetching orders:', error);
-        return res.status(500).json({ error: 'Failed to fetch orders', details: error.message });
-      }
-  
-      const formattedOrders = data.map((entry) => ({
-        orderId: entry.id,
-        orderDescription: entry.orderdescription,
-        created_at: moment(entry.created_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'),
-      }));
-  
-      res.status(200).json(formattedOrders);
-    } catch (err) {
-      console.error('Error fetching orders:', err);
-      res.status(500).json({ error: 'Failed to fetch orders', details: err.message });
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, orderdescription, created_at');
+
+    if (error) {
+      console.error('Error fetching orders:', error);
+      return res.status(500).json({ error: 'Failed to fetch orders', details: error.message });
     }
+
+    const formattedOrders = data.map((entry) => ({
+      orderId: entry.id,
+      orderDescription: entry.orderdescription,
+      created_at: moment(entry.created_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'),
+    }));
+
+    res.status(200).json(formattedOrders);
+  } catch (err) {
+    console.error('Error fetching orders:', err);
+    res.status(500).json({ error: 'Failed to fetch orders', details: err.message });
+  }
 });
 
 // Create a new Order and link it to a Product
@@ -57,7 +55,6 @@ app.post('/api/orders', async (req, res) => {
   }
 
   try {
-    // Insert new order into the 'orders' table
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert([{ orderDescription, created_at: createdAt }])
@@ -66,7 +63,6 @@ app.post('/api/orders', async (req, res) => {
     if (orderError) throw orderError;
     const orderId = orderData[0].Id;
 
-    // Link the order to the product in 'orderproductmap'
     const { error: linkError } = await supabase
       .from('orderproductmap')
       .insert([{ order_id: orderId, product_id: productId, quantity }]);
@@ -96,7 +92,6 @@ app.put('/api/orders/:id', async (req, res) => {
   }
 
   try {
-    // Update the 'orders' table with new creation date
     const { error: updateError } = await supabase
       .from('orders')
       .update({ created_at: createdAt })
@@ -104,7 +99,6 @@ app.put('/api/orders/:id', async (req, res) => {
 
     if (updateError) throw updateError;
 
-    // Check if there's already a mapping for the order and product
     const { data: existingMapping, error: mappingError } = await supabase
       .from('orderproductmap')
       .select('*')
@@ -112,7 +106,6 @@ app.put('/api/orders/:id', async (req, res) => {
 
     if (mappingError) throw mappingError;
 
-    // If mapping exists, update the quantity
     if (existingMapping.length > 0) {
       const { error: quantityError } = await supabase
         .from('orderproductmap')
@@ -121,7 +114,6 @@ app.put('/api/orders/:id', async (req, res) => {
 
       if (quantityError) throw quantityError;
     } else {
-      // If mapping doesn't exist, create a new one
       const { error: createError } = await supabase
         .from('orderproductmap')
         .insert([{ order_id: id, product_id: productId, quantity }]);
@@ -145,7 +137,6 @@ app.delete('/api/orders/:id', async (req, res) => {
   }
 
   try {
-    // Delete the product-order mapping first
     const { error: deleteMappingError } = await supabase
       .from('orderproductmap')
       .delete()
@@ -153,7 +144,6 @@ app.delete('/api/orders/:id', async (req, res) => {
 
     if (deleteMappingError) throw deleteMappingError;
 
-    // Delete the order from the 'orders' table
     const { data, error: deleteError } = await supabase
       .from('orders')
       .delete()
@@ -234,7 +224,7 @@ app.get('/api/customers/:orderId', async (req, res) => {
   try {
     const customer = await db('customers')
       .select('email')
-      .where('id', orderId) 
+      .where('id', orderId) // Fetching customer details based on order ID
       .first();
     if (customer) {
       res.json(customer);
@@ -246,5 +236,5 @@ app.get('/api/customers/:orderId', async (req, res) => {
   }
 });
 
-// Export the app for Vercel
+// Export the server as a handler for Vercel serverless function
 module.exports = app;
