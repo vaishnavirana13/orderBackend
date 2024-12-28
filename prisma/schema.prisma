@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model customers {
+  id              Int               @id @default(autoincrement())
+  productname     String            @db.VarChar(100)
+  productquantity Int
+  orderproductmap orderproductmap[]
+}
+
+model orderproductmap {
+  id          Int        @id @default(autoincrement())
+  orderid     Int
+  productid   Int
+  total_count Int?       @default(0)
+  customer_id Int?
+  customers   customers? @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_customer")
+  products    products   @relation(fields: [productid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model products {
+  id                 Int               @id
+  productname        String            @db.VarChar(100)
+  productdescription String?
+  stockquantity      Int?              @default(50)
+  productimageurl    String?           @db.VarChar(255)
+  orderproductmap    orderproductmap[]
+}
