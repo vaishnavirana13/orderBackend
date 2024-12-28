@@ -1,15 +1,15 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const moment = require('moment-timezone');
-const supabase = require('./db'); // Import the Supabase client
+const supabase = require('../db'); // Import Supabase client
 
 const app = express();
 
+// Middleware
 app.use(express.json());
-app.use(cors({ origin: 'https://order-frontend-rho.vercel.app' })); // Adjust frontend URL if needed
+app.use(cors({ origin: 'https://order-frontend-rho.vercel.app' })); // Update to match your frontend URL
 
-// Test the server and database connection
+// Root endpoint to check server status
 app.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase.from('orders').select('*').limit(1);
@@ -22,6 +22,7 @@ app.get('/', async (req, res) => {
   }
 });
 
+// Fetch orders
 app.get('/api/orders', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -46,7 +47,7 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// Create a new Order and link it to a Product
+// Create a new order
 app.post('/api/orders', async (req, res) => {
   const { orderDescription, createdAt, productId, quantity } = req.body;
 
@@ -57,11 +58,12 @@ app.post('/api/orders', async (req, res) => {
   try {
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .insert([{ orderDescription, created_at: createdAt }])
-      .select('Id');
+      .insert([{ orderdescription: orderDescription, created_at: createdAt }])
+      .select('id');
 
     if (orderError) throw orderError;
-    const orderId = orderData[0].Id;
+
+    const orderId = orderData[0].id;
 
     const { error: linkError } = await supabase
       .from('orderproductmap')
@@ -82,7 +84,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Update an Order and modify only the product quantity (not description)
+// Update an order
 app.put('/api/orders/:id', async (req, res) => {
   const { id } = req.params;
   const { createdAt, productId, quantity } = req.body;
@@ -95,7 +97,7 @@ app.put('/api/orders/:id', async (req, res) => {
     const { error: updateError } = await supabase
       .from('orders')
       .update({ created_at: createdAt })
-      .match({ Id: id });
+      .match({ id: id });
 
     if (updateError) throw updateError;
 
@@ -128,7 +130,7 @@ app.put('/api/orders/:id', async (req, res) => {
   }
 });
 
-// Delete an Order
+// Delete an order
 app.delete('/api/orders/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -147,7 +149,7 @@ app.delete('/api/orders/:id', async (req, res) => {
     const { data, error: deleteError } = await supabase
       .from('orders')
       .delete()
-      .match({ Id: parseInt(id) });
+      .match({ id: parseInt(id) });
 
     if (deleteError) throw deleteError;
     if (data.length === 0) {
@@ -161,26 +163,7 @@ app.delete('/api/orders/:id', async (req, res) => {
   }
 });
 
-// Fetch all Order-Product mappings
-app.get('/api/orderproductmap', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('orderproductmap')
-      .select('*');
-
-    if (error) {
-      console.error('Error fetching order-product mappings:', error);
-      return res.status(500).json({ error: 'Failed to fetch order-product mappings', details: error.message });
-    }
-
-    res.status(200).json(data);
-  } catch (err) {
-    console.error('Error fetching order-product mappings:', err);
-    res.status(500).json({ error: 'Failed to fetch order-product mappings', details: err.message });
-  }
-});
-
-// Fetch all Cart details
+// Fetch cart details
 app.get('/api/cart', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -199,7 +182,7 @@ app.get('/api/cart', async (req, res) => {
   }
 });
 
-// Fetch customer details from the 'customers' table
+// Fetch customer details
 app.get('/api/customers', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -218,23 +201,5 @@ app.get('/api/customers', async (req, res) => {
   }
 });
 
-// Example backend route for fetching customer details by order ID
-app.get('/api/customers/:orderId', async (req, res) => {
-  const { orderId } = req.params;
-  try {
-    const customer = await db('customers')
-      .select('email')
-      .where('id', orderId) // Fetching customer details based on order ID
-      .first();
-    if (customer) {
-      res.json(customer);
-    } else {
-      res.status(404).json({ message: 'Customer not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching customer details' });
-  }
-});
-
-// Export the server as a handler for Vercel serverless function
+// Export the server as a handler for Vercel
 module.exports = app;
