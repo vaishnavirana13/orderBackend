@@ -8,7 +8,7 @@ const app = express();
 const port = 4000;
 
 app.use(express.json());
-app.use(cors({ origin: 'http://localhost:5173' })); // Adjust frontend URL if needed
+app.use(cors({ origin: 'https://vercel.com/vaishnavis-projects-8912a560/order-frontend' })); // Adjust frontend URL if needed
 
 // Test the server and database connection
 app.get('/', async (req, res) => {
