@@ -7,7 +7,7 @@ const supabase = require('./db'); // Import the Supabase client
 const app = express();
 
 app.use(express.json());
-app.use(cors({ origin: 'http://localhost:5173' })); // Adjust frontend URL if needed
+app.use(cors({ origin: 'https://order-frontend-rho.vercel.app' })); // Adjust frontend URL if needed
 
 // Test the server and database connection
 app.get('/', async (req, res) => {
