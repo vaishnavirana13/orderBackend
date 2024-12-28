@@ -1,13 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const moment = require('moment-timezone');
-const supabase = require('../db'); // Import Supabase client
+const supabase = require('../db'); 
 
 const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({ origin: 'https://order-frontend-rho.vercel.app' })); // Update to match your frontend URL
+app.use(cors({ origin: 'https://order-frontend-rho.vercel.app' }));
 
 // Root endpoint to check server status
 app.get('/', async (req, res) => {
@@ -201,5 +201,5 @@ app.get('/api/customers', async (req, res) => {
   }
 });
 
-// Export the server as a handler for Vercel
+
 module.exports = app;
